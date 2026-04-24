@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FN Bulovka - Kalendar komunikacnich aktivit 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f5f6fa;
+            --white: #ffffff;
+            --border: #e2e5ee;
+            --border-light: #eef0f5;
+            --text: #1a1d2e;
+            --text-sec: #5a5f7a;
+            --text-dim: #8b90a8;
+            --accent: #3b6cf5;
+            --accent-light: #eaf0ff;
+            --green: #0fa968;
+            --green-bg: #edfbf3;
+            --green-border: #b8ecd0;
+            --green-text: #087a4a;
+            --yellow: #d99a06;
+            --yellow-bg: #fef9ec;
+            --yellow-border: #f0d68a;
+            --yellow-text: #8a6200;
+            --blue-bg: #eef3ff;
+            --blue-border: #b8ccf5;
+            --blue-text: #3b5998;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter',-apple-system,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; line-height:1.6; -webkit-font-smoothing:antialiased; }
+        .container { max-width:1200px; margin:0 auto; padding:40px 24px 80px; }
+
+        header { text-align:center; margin-bottom:36px; }
+        .logo-badge { display:inline-flex; align-items:center; gap:10px; background:var(--white); border:1px solid var(--border); padding:8px 20px; border-radius:40px; margin-bottom:14px; font-size:12px; font-weight:600; color:var(--text-sec); letter-spacing:1px; text-transform:uppercase; box-shadow:var(--shadow-sm); }
+        .logo-badge .dot { width:8px; height:8px; background:var(--green); border-radius:50%; animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+        h1 { font-size:2.1rem; font-weight:800; letter-spacing:-.03em; }
+        .subtitle { font-size:.95rem; color:var(--text-dim); }
+
+        .legend { display:flex; justify-content:center; gap:20px; margin-bottom:28px; flex-wrap:wrap; }
+        .legend-item { display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-sec); font-weight:500; }
+        .legend-swatch { width:13px; height:13px; border-radius:3px; }
+        .legend-swatch.green { background:var(--green); }
+        .legend-swatch.yellow { background:var(--yellow); }
+        .legend-swatch.blue { background:var(--accent); }
+
+        .stats-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:32px; }
+        @media(max-width:700px){ .stats-bar{grid-template-columns:repeat(2,1fr);} }
+        .stat-box { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:18px; text-align:center; box-shadow:var(--shadow-sm); }
+        .stat-number { font-size:1.9rem; font-weight:800; color:var(--accent); }
+        .stat-label { font-size:10px; color:var(--text-dim); margin-top:2px; text-transform:uppercase; letter-spacing:.5px; font-weight:700; }
+
+        .calendar-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:44px; }
+        @media(max-width:900px){ .calendar-grid{grid-template-columns:repeat(3,1fr);} }
+        @media(max-width:600px){ .calendar-grid{grid-template-columns:repeat(2,1fr);} h1{font-size:1.5rem;} }
+        .month-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); padding:16px; transition:all .25s; box-shadow:var(--shadow-sm); }
+        .month-card:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); }
+        .month-card.is-current { border-color:var(--accent); box-shadow:0 0 0 3px rgba(59,108,245,.1),var(--shadow-md); }
+        .month-card.is-current .month-name { color:var(--accent); }
+        .month-card.is-past { opacity:.45; }
+        .month-name { font-size:.92rem; font-weight:700; margin-bottom:6px; }
+        .month-count { display:inline-block; font-size:11px; font-weight:700; padding:2px 10px; border-radius:20px; margin-bottom:8px; }
+        .month-count.has { background:var(--accent-light); color:var(--accent); }
+        .month-count.empty { background:var(--bg); color:var(--text-dim); }
+        .month-activities { list-style:none; }
+        .month-activities li { font-size:10.5px; padding:3px 0; border-bottom:1px solid var(--border-light); color:var(--text-sec); line-height:1.35; display:flex; align-items:flex-start; gap:5px; }
+        .month-activities li:last-child { border-bottom:none; }
+        .act-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+        .act-dot.green { background:var(--green); }
+        .act-dot.yellow { background:var(--yellow); }
+        .act-dot.blue { background:var(--accent); }
+
+        .section-header { margin-bottom:16px; }
+        .section-header h2 { font-size:1.3rem; font-weight:700; letter-spacing:-.02em; }
+        .section-header p { color:var(--text-dim); font-size:.82rem; margin-top:2px; }
+
+        .filter-bar { display:flex; gap:7px; margin-bottom:14px; flex-wrap:wrap; }
+        .filter-btn { background:var(--white); border:1px solid var(--border); color:var(--text-sec); padding:6px 14px; border-radius:8px; font-size:12px; font-weight:500; font-family:'Inter',sans-serif; cursor:pointer; transition:all .2s; }
+        .filter-btn:hover { border-color:var(--accent); color:var(--accent); }
+        .filter-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+        .activity-list { display:flex; flex-direction:column; gap:7px; }
+        .activity-card { background:var(--white); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:all .25s; cursor:pointer; box-shadow:var(--shadow-sm); }
+        .activity-card:hover { box-shadow:var(--shadow-md); }
+        .activity-card.type-green { border-left:4px solid var(--green); }
+        .activity-card.type-yellow { border-left:4px solid var(--yellow); }
+        .activity-card.type-blue { border-left:4px solid var(--accent); }
+        .activity-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; gap:10px; user-select:none; }
+        .activity-header-left { display:flex; align-items:center; gap:12px; flex:1; min-width:0; }
+        .activity-date-badge { flex-shrink:0; min-width:80px; text-align:center; padding:4px 10px; border-radius:var(--radius-sm); font-size:11px; font-weight:600; }
+        .type-green .activity-date-badge { background:var(--green-bg); color:var(--green-text); border:1px solid var(--green-border); }
+        .type-yellow .activity-date-badge { background:var(--yellow-bg); color:var(--yellow-text); border:1px solid var(--yellow-border); }
+        .type-blue .activity-date-badge { background:var(--blue-bg); color:var(--blue-text); border:1px solid var(--blue-border); }
+        .activity-title-wrap { min-width:0; }
+        .activity-title { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .activity-dept { font-size:11px; color:var(--text-dim); margin-top:1px; }
+        .activity-chevron { flex-shrink:0; width:18px; height:18px; color:var(--text-dim); transition:transform .3s; }
+        .activity-card.open .activity-chevron { transform:rotate(180deg); }
+        .activity-body { max-height:0; overflow:hidden; transition:max-height .4s ease; }
+        .activity-card.open .activity-body { max-height:900px; }
+        .activity-body-inner { padding:0 16px 16px; border-top:1px solid var(--border-light); }
+
+        .detail-header { display:flex; align-items:center; gap:10px; padding:12px 0 8px; flex-wrap:wrap; }
+        .detail-header-title { font-size:15px; font-weight:700; }
+        .detail-header-date { font-size:12px; font-weight:600; padding:3px 10px; border-radius:6px; }
+        .type-green .detail-header-date { background:var(--green-bg); color:var(--green-text); }
+        .type-yellow .detail-header-date { background:var(--yellow-bg); color:var(--yellow-text); }
+        .type-blue .detail-header-date { background:var(--blue-bg); color:var(--blue-text); }
+
+        .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px; }
+        @media(max-width:600px){ .detail-grid{grid-template-columns:1fr;} }
+        .detail-item { display:flex; flex-direction:column; gap:2px; }
+        .detail-label { font-size:10px; text-transform:uppercase; letter-spacing:.6px; color:var(--text-dim); font-weight:700; }
+        .detail-value { font-size:12.5px; color:var(--text); line-height:1.5; }
+        .detail-value a { color:var(--accent); text-decoration:none; }
+        .detail-value a:hover { text-decoration:underline; }
+        .detail-full { grid-column:1/-1; }
+
+        .activity-note { margin-top:8px; padding:8px 12px; background:var(--accent-light); border-left:3px solid var(--accent); border-radius:0 var(--radius-sm) var(--radius-sm) 0; font-size:12px; color:var(--text-sec); line-height:1.5; }
+        .activity-note a { color:var(--accent); text-decoration:none; font-weight:500; }
+        .activity-note a:hover { text-decoration:underline; }
+
+        .source-link { margin-top:6px; padding:6px 10px; background:#f0f7ff; border-radius:6px; font-size:11px; color:var(--blue-text); line-height:1.4; }
+        .source-link a { color:var(--accent); font-weight:500; text-decoration:none; word-break:break-all; }
+        .source-link a:hover { text-decoration:underline; }
+
+        .section-divider { margin:36px 0 20px; padding:10px 0; border-bottom:2px solid var(--border); }
+        .section-divider h3 { font-size:1.1rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px; }
+        .section-divider .badge { font-size:11px; background:var(--accent-light); color:var(--accent); padding:2px 10px; border-radius:20px; font-weight:700; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<header>
+    <div class="logo-badge"><span class="dot"></span>Fakultni nemocnice Bulovka</div>
+    <h1>Kalendar komunikacnich aktivit 2026</h1>
+    <p class="subtitle">Prehled planovanych akci a komunikacnich milniku do konce roku 2026</p>
+</header>
+
+<div class="legend">
+    <div class="legend-item"><div class="legend-swatch green"></div><span>Potvrzeny datum</span></div>
+    <div class="legend-item"><div class="legend-swatch blue"></div><span>Termin dohledan na internetu</span></div>
+    <div class="legend-item"><div class="legend-swatch yellow"></div><span>Navrhovany datum</span></div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+<div class="calendar-grid" id="calendarGrid"></div>
+
+<div class="section-header">
+    <h2>Seznam vsech aktivit</h2>
+    <p>Kliknutim zobrazite detaily jednotlivych akci</p>
+</div>
+
+<div class="filter-bar" id="filterBar">
+    <button class="filter-btn active" data-filter="all">Vse</button>
+    <button class="filter-btn" data-filter="green">Potvrzene</button>
+    <button class="filter-btn" data-filter="blue">Dohledane</button>
+    <button class="filter-btn" data-filter="yellow">Navrhovane</button>
+</div>
+
+<div id="monthlySection"></div>
+<div id="recurringSection"></div>
+<div id="unassignedSection"></div>
+
+</div>
+
+<script>
+var A = [
+    // ===== DUBEN =====
+    {t:"Jarni pracovni pediatricky seminar", d:"29. 4. 2026", ds:"2026-04-29", m:4, c:"green",
+     dep:"Pediatricke oddeleni", con:"Prim. MUDr. Ivan Peychl", email:"ivan.peychl@bulovka.cz", ph:"6509",
+     desc:"Pro prakticke pediatry z okoli, pediatry z jinych nemocnic, pripadne kolegy z jinych pracovist FNB. 16:30 - 18:15.", note:"", src:""},
+
+    {t:"Grantovy projekt AZV - Optimalizace peripartalni pece", d:"duben 2026", ds:"2026-04-15", m:4, c:"yellow",
+     dep:"GPK - Oddeleni sestinedeli", con:"Vera Stepanova", email:"vera.stepanova@bulovka.cz", ph:"l. 3201 / 776 611 456",
+     desc:"Rozjezd grantoveho projektu AZV: Optimalizace peripartalni pece a psychologickych dopadu na rodice.", note:"Bude potrebovat letaky a informacni plakaty.", src:""},
+
+    {t:"Velikonocni nadilka - Dobrovolnicky program", d:"duben 2026", ds:"2026-04-10", m:4, c:"yellow",
+     dep:"Usek NOP", con:"Mgr. Sona Mendlova, Mgr. Vera Cermakova", email:"sona.mendlova@bulovka.cz", ph:"266 082 964",
+     desc:"Dobrovolnicky program - Velikonocni nadilka.", note:"", src:""},
+
+    {t:"Kongres ESCMID Global - Mnichov", d:"17.-21. 4. 2026", ds:"2026-04-17", m:4, c:"blue",
+     dep:"Klinika infekcnich nemoci FNB", con:"Hynek Bartos", email:"hynek.bartos@bulovka.cz", ph:"721 360 937",
+     desc:"Infektologicky kongres ESCMID Global v Mnichove - aktivni ucast.", note:"",
+     src:"https://www.escmid.org"},
+
+    {t:"Itibo humanitarni mise v Africe", d:"2. pol. dubna 2026", ds:"2026-04-22", m:4, c:"yellow",
+     dep:"Klinika infekcnich nemoci FNB", con:"Hynek Bartos", email:"hynek.bartos@bulovka.cz", ph:"721 360 937",
+     desc:"Itibo humanitarni mise lekarek v Africe se studenty.", note:"", src:""},
+
+    {t:"Grant CROWN - poporodni rozhovory", d:"duben 2026", ds:"2026-04-15", m:4, c:"yellow",
+     dep:"Gynekologicko-porodnicka klinika 1. LF UK", con:"Michal Zikan", email:"michal.zikan@bulovka.cz", ph:"607 542 975",
+     desc:"Zahajeni rozsahleho grantoveho projektu ke zlepseni rodicovskych kompetenci.", note:"", src:""},
+
+    // ===== KVETEN =====
+    {t:"Den porodnich asistentek", d:"5. 5. 2026", ds:"2026-05-05", m:5, c:"blue",
+     dep:"Porodni sal", con:"Lucie Velikova", email:"lucie.velikova@bulovka.cz", ph:"l. 3299",
+     desc:"Mezinarodni den porodnich asistentek (International Day of the Midwife) - kazdorocne 5. kvetna.", note:"",
+     src:"https://www.internationalmidwives.org/icm-events/international-day-of-the-midwife.html"},
+
+    {t:"Den hygieny rukou (WHO)", d:"5. 5. 2026", ds:"2026-05-05", m:5, c:"blue",
+     dep:"OHE - Oddeleni hyg. epidemiologie", con:"Hana Blahova", email:"hana.blahova@bulovka.cz", ph:"6070",
+     desc:"Svetovy den hygieny rukou (WHO) - kazdorocne 5. kvetna. Potreba fotodokumentace.", note:"",
+     src:"https://www.who.int/campaigns/world-hand-hygiene-day"},
+
+    {t:"Tym FNB (KAIUM) na Vltava Run", d:"9.-10. 5. 2026", ds:"2026-05-09", m:5, c:"blue",
+     dep:"KAIUM - Klinika anesteziologie", con:"MUDr. Josef Skola, Ph.D.", email:"josef.skola@bulovka.cz", ph:"605 433 149",
+     desc:"Tym FNB (KAIUM) na stafetovem bezeckem zavodu Vltava Run. Start Zadov, cil Praha - Hamr Branik.", note:"",
+     src:"https://www.vltavarun.cz"},
+
+    {t:"Den boje s ovarialnim karcinomem", d:"8. 5. 2026", ds:"2026-05-08", m:5, c:"blue",
+     dep:"Gynekologicko-porodnicka klinika 1. LF UK", con:"Michal Zikan", email:"michal.zikan@bulovka.cz", ph:"607 542 975",
+     desc:"Svetovy den boje s ovarialnim karcinomem (World Ovarian Cancer Day) - kazdorocne 8. kvetna. Zdurazneni role operacni lecby a centralizace.", note:"",
+     src:"https://worldovariancancercoalition.org/world-ovarian-cancer-day/"},
+
+    {t:"Beh pro Hospic sv. Stepana", d:"1.-23. 5. 2026 (vrchol 23.5.)", ds:"2026-05-23", m:5, c:"blue",
+     dep:"Klinika infekcnich nemoci FNB", con:"Hynek Bartos", email:"hynek.bartos@bulovka.cz", ph:"721 360 937",
+     desc:"Beh pro Hospic sv. Stepana v Litomericich. Charitat. akce probi od 1.5. do 23.5., vrchol je 23. kvetna.", note:"",
+     src:"https://www.hospiclitomerice.cz"},
+
+    {t:"Aktualizace webovych stranek lazni", d:"do 31. 5. 2026", ds:"2026-05-31", m:5, c:"green",
+     dep:"Slatinne lazne Tousen", con:"Bc. Milena Pisova", email:"milena.pisova@bulovka.cz", ph:"776 744 926",
+     desc:"Uprava a aktualizace webovych stranek lazni. Deadline 31. 5. 2026.", note:"", src:""},
+
+    {t:"Prednaska o cestovani - Interna (DP)", d:"kveten 2026", ds:"2026-05-15", m:5, c:"yellow",
+     dep:"Usek NOP", con:"Mgr. Sona Mendlova, Mgr. Vera Cermakova", email:"sona.mendlova@bulovka.cz", ph:"266 082 964",
+     desc:"Dobrovolnicky program - Prednaska o cestovani na Interne.", note:"", src:""},
+
+    // ===== CERVEN =====
+    {t:"Uzaver porodniho salu - informacni kampan", d:"od 15. 6. 2026", ds:"2026-06-15", m:6, c:"green",
+     dep:"Gynekologicko-porodnicka klinika 1. LF UK", con:"Michal Zikan", email:"michal.zikan@bulovka.cz", ph:"607 542 975",
+     desc:"Informacni plakaty pri rekonstrukci budovy / uzaveru porodniho salu.", note:"", src:""},
+
+    {t:"Canisterapie na detskem oddeleni (DP)", d:"cerven 2026", ds:"2026-06-15", m:6, c:"yellow",
+     dep:"Usek NOP", con:"Mgr. Sona Mendlova, Mgr. Vera Cermakova", email:"sona.mendlova@bulovka.cz", ph:"266 082 964",
+     desc:"Dobrovolnicky program - Canisterapie na detskem oddeleni.", note:"", src:""},
+
+    {t:"S plysakem na prazdniny (ONP)", d:"cerven 2026", ds:"2026-06-20", m:6, c:"yellow",
+     dep:"Usek NOP", con:"Mgr. Sona Mendlova, Mgr. Vera Cermakova", email:"sona.mendlova@bulovka.cz", ph:"266 082 964",
+     desc:"Dobrovolnicky program - S plysakem na prazdniny.", note:"", src:""},
+
+    {t:"Horska medicina - foto z letniho kurzu", d:"Q2 / cerven 2026", ds:"2026-06-15", m:6, c:"yellow",
+     dep:"KAIUM - Klinika anesteziologie", con:"MUDr. Josef Skola, Ph.D.", email:"josef.skola@bulovka.cz", ph:"605 433 149",
+     desc:"Horska medicina - foto z letniho kurzu spolu s 3. LF.", note:"", src:""},
+
+    // ===== CERVENEC =====
+    {t:"Nove video porodniho salu", d:"cervenec 2026 (1. tyden)", ds:"2026-07-06", m:7, c:"yellow",
+     dep:"Porodni sal", con:"Lucie Velikova", email:"lucie.velikova@bulovka.cz", ph:"l. 3299",
+     desc:"Natoceni noveho videa porodniho salu - stavajici video na Facebooku je neaktualni.", note:"", src:""},
+
+    // ===== SRPEN =====
+    {t:"Naborove video + video arealu", d:"do konce leta 2026", ds:"2026-08-31", m:8, c:"yellow",
+     dep:"Personalni usek", con:"Mgr. Lenka Svancarova", email:"lenka.svancarova@bulovka.cz", ph:"266 084 114",
+     desc:"Naborove video + video arealu (univerzalni).", note:"Navrhovany termin nataceni: cervenec-srpen 2026.", src:""},
+
+    // ===== ZARI =====
+    {t:"Venerologicky den", d:"19. 9. 2026", ds:"2026-09-19", m:9, c:"green",
+     dep:"Dermatovenerologicka klinika", con:"Filip Rob", email:"filip.rob@bulovka.cz", ph:"723 061 334",
+     desc:"V prostorach 2. LF UK v Motole (pavilon Plzenska).", note:"", src:""},
+
+    {t:"Vnitrni zachyt receptu - popularizace", d:"zari 2026", ds:"2026-09-01", m:9, c:"yellow",
+     dep:"UIKT", con:"Jan Alexa", email:"jan.alexa@bulovka.cz", ph:"722 586 831",
+     desc:"Vnitrni zachyt receptu - bude nutno interne popularizovat mezi lekari.", note:"", src:""},
+
+    {t:"Vyjezdove stanoviste ZZS HMP ve FNB", d:"zari 2026", ds:"2026-09-01", m:9, c:"yellow",
+     dep:"KAIUM - Klinika anesteziologie", con:"MUDr. Josef Skola, Ph.D.", email:"josef.skola@bulovka.cz", ph:"605 433 149",
+     desc:"Vyjezdove stanoviste Zdravotnicke zachranne sluzby HMP ve FNB.", note:"", src:""},
+
+    {t:"Konference Rodime se", d:"zari 2026", ds:"2026-09-15", m:9, c:"yellow",
+     dep:"Gynekologicko-porodnicka klinika 1. LF UK", con:"Michal Zikan", email:"michal.zikan@bulovka.cz", ph:"607 542 975",
+     desc:"Konference Rodime se - zari 2026.", note:"", src:""},
+
+    {t:"KMINE cesky kongres", d:"17.-19. 9. 2026", ds:"2026-09-17", m:9, c:"blue",
+     dep:"Klinika infekcnich nemoci FNB", con:"Hynek Bartos", email:"hynek.bartos@bulovka.cz", ph:"721 360 937",
+     desc:"12. kongres klinicke mikrobiologie, infekcnich nemoci a epidemiologie (KMINE 2026) spolecne s 29. cesko-slovenskym kongresem. Clarion Congress Hotel Prague.", note:"",
+     src:"https://www.kmine-infekce-2026.cz"},
+
+    {t:"Podzimni dilnicka pro zamestnance (DP)", d:"zari 2026", ds:"2026-09-15", m:9, c:"yellow",
+     dep:"Usek NOP", con:"Mgr. Sona Mendlova, Mgr. Vera Cermakova", email:"sona.mendlova@bulovka.cz", ph:"266 082 964",
+     desc:"Dobrovolnicky program - Podzimni dilnicka pro zamestnance.", note:"", src:""},
+
+    // ===== RIJEN =====
+    {t:"Podzimni pracovni pediatricky seminar", d:"rijen/listopad 2026", ds:"2026-10-15", m:10, c:"yellow",
+     dep:"Pediatricke oddeleni", con:"Prim. MUDr. Ivan Peychl", email:"ivan.peychl@bulovka.cz", ph:"6509",
+     desc:"Pro prakticke pediatry z okoli, pediatry z jinych nemocnic, pripadne kolegy z jinych pracovist FNB.", note:"", src:""},
+
+    {t:"Spusteni IS Chameleon na 3 klinikach", d:"rijen 2026", ds:"2026-10-01", m:10, c:"yellow",
+     dep:"UIKT", con:"Jan Alexa", email:"jan.alexa@bulovka.cz", ph:"722 586 831",
+     desc:"Spusteni informacniho systemu Chameleon na 3 klinikach.", note:"", src:""},
+
+    {t:"Humanitarni mise MEDEVAC - Ghana", d:"1. pol. rijna 2026", ds:"2026-10-07", m:10, c:"yellow",
+     dep:"Klinika plasticke chirurgie", con:"MUDr. Martin Molitor", email:"martin.molitor@bulovka.cz", ph:"266 083 204",
+     desc:"Humanitarni mise v ramci programu MEDEVAC do Ghany.", note:"", src:""},
+
+    {t:"Den Jarmily Rousarove - konference pro sestry", d:"14. 10. 2026", ds:"2026-10-14", m:10, c:"green",
+     dep:"Usek NOP", con:"Mgr. Sona Mendlova, Mgr. Vera Cermakova", email:"sona.mendlova@bulovka.cz", ph:"266 082 964",
+     desc:"Konference pro sestry ve spolupraci s FNKV.", note:"", src:""},
+
+    // ===== LISTOPAD =====
+    {t:"Den zdravi", d:"listopad 2026", ds:"2026-11-15", m:11, c:"yellow",
+     dep:"Usek NOP", con:"Mgr. Sona Mendlova, Mgr. Vera Cermakova", email:"sona.mendlova@bulovka.cz", ph:"266 082 964",
+     desc:"Den zdravi - interni akce FNB.", note:"", src:""},
+
+    // ===== PROSINEC =====
+    {t:"XXXI. sympozium esteticke a plasticke chirurgie", d:"5. 12. 2026", ds:"2026-12-05", m:12, c:"green",
+     dep:"Klinika plasticke chirurgie", con:"MUDr. Martin Molitor", email:"martin.molitor@bulovka.cz", ph:"266 083 204",
+     desc:"Pravidelne XXXI. sympozium esteticke a plasticke chirurgie.", note:"", src:""},
+
+    {t:"Mikulas, Jeziskova vyzva, Vanocni nadilka (DP)", d:"prosinec 2026", ds:"2026-12-06", m:12, c:"yellow",
+     dep:"Usek NOP", con:"Mgr. Sona Mendlova, Mgr. Vera Cermakova", email:"sona.mendlova@bulovka.cz", ph:"266 082 964",
+     desc:"Dobrovolnicky program - Mikulas, Jeziskova vyzva, Vanocni nadilka.", note:"", src:""},
+
+    {t:"Vyroba adventnich vencu pro zamestnance", d:"prosinec 2026", ds:"2026-12-01", m:12, c:"yellow",
+     dep:"Usek NOP", con:"Mgr. Sona Mendlova, Mgr. Vera Cermakova", email:"sona.mendlova@bulovka.cz", ph:"266 082 964",
+     desc:"Vyroba adventnich vencu pro zamestnance.", note:"", src:""},
+
+    {t:"Analyticke aktivity k nahrade intranetu", d:"konec roku 2026", ds:"2026-12-01", m:12, c:"yellow",
+     dep:"UIKT", con:"Jan Alexa", email:"jan.alexa@bulovka.cz", ph:"722 586 831",
+     desc:"Zahajeni analytickych aktivit k nahrade/povyseni intranetu, ktery je vyrazne zastaraly.", note:"", src:""}
+];
+
+// ===== PRUBEZNE (recurring) =====
+var R = [
+    {t:"Pravidelne odborne pediatricke seminare", d:"prubezne (st 8:00-8:30)", ds:"", m:0, c:"yellow",
+     dep:"Pediatricke oddeleni", con:"Prim. MUDr. Ivan Peychl", email:"ivan.peychl@bulovka.cz", ph:"6509",
+     desc:"Pro lekare Pediatrickeho oddeleni a kolegy z jinych pracovist FNB. Terminy se upresni podle potreby.", note:"", src:""},
+    {t:"Naborove kampane", d:"prubezne", ds:"", m:0, c:"yellow",
+     dep:"Personalni usek", con:"Mgr. Lenka Svancarova", email:"lenka.svancarova@bulovka.cz", ph:"266 084 114",
+     desc:"Prubezne naborove kampane.", note:"", src:""},
+    {t:"Propagace lazni na socialnich sitich", d:"prubezne", ds:"", m:0, c:"yellow",
+     dep:"Slatinne lazne Tousen", con:"Bc. Milena Pisova", email:"milena.pisova@bulovka.cz", ph:"776 744 926",
+     desc:"Propagace zarizeni, reklama na socialnich sitich.", note:"", src:""},
+    {t:"Edukacni materialy pro oddeleni lazni", d:"prubezne", ds:"", m:0, c:"yellow",
+     dep:"Slatinne lazne Tousen", con:"Bc. Milena Pisova", email:"milena.pisova@bulovka.cz", ph:"776 744 926",
+     desc:"Edukacni materialy pro oddeleni.", note:"", src:""},
+    {t:"Vzajemna komunikace a informovanost", d:"prubezne", ds:"", m:0, c:"yellow",
+     dep:"Slatinne lazne Tousen", con:"Bc. Milena Pisova", email:"milena.pisova@bulovka.cz", ph:"776 744 926",
+     desc:"Vzajemna komunikace a informovanost mezi PR a laznemi.", note:"", src:""},
+    {t:"Podiatricka pece v diabetologickych ambulancich", d:"prubezne", ds:"", m:0, c:"yellow",
+     dep:"Interni klinika FNB a 3. LF UK", con:"MUDr. Oliver Kuchar, Ph.D.", email:"oliver.kuchar@bulovka.cz", ph:"266 084 614",
+     desc:"Zajisteni podiatricke pece v ramci diabetologickych ambulanci.", note:"", src:""},
+    {t:"Rozsiriovani nutricni a obezitologicke pece", d:"prubezne", ds:"", m:0, c:"yellow",
+     dep:"Interni klinika FNB a 3. LF UK", con:"MUDr. Oliver Kuchar, Ph.D.", email:"oliver.kuchar@bulovka.cz", ph:"266 084 614",
+     desc:"Rozsiriovani luzkove i ambulantni nutricni pece, vcetne rozvoje obezitologicke ambulance.", note:"", src:""},
+    {t:"Rozvoj kanylacniho centra FNB", d:"prubezne", ds:"", m:0, c:"yellow",
+     dep:"Interni klinika FNB a 3. LF UK", con:"MUDr. Oliver Kuchar, Ph.D.", email:"oliver.kuchar@bulovka.cz", ph:"266 084 614",
+     desc:"Prohlubovani spoluprace kanylacniho centra FNB s ostatnimi odbornostmi.", note:"", src:""},
+    {t:"Zvyseni kapacity vyuky studentu", d:"prubezne", ds:"", m:0, c:"yellow",
+     dep:"Interni klinika FNB a 3. LF UK", con:"MUDr. Oliver Kuchar, Ph.D.", email:"oliver.kuchar@bulovka.cz", ph:"266 084 614",
+     desc:"Zvyseni kapacity a rozsireni portfolia vyuky studentu.", note:"", src:""},
+    {t:"Poporodni navstevy v domacim prostredi", d:"prubezne", ds:"", m:0, c:"yellow",
+     dep:"GPK - Oddeleni sestinedeli", con:"Vera Stepanova", email:"vera.stepanova@bulovka.cz", ph:"l. 3201 / 776 611 456",
+     desc:"Poporodni navstevy v domacim prostredi - prubezna aktivita.", note:"", src:""},
+    {t:"Partnerstvi FNB + ESA - Space Medicine", d:"prubezne", ds:"", m:0, c:"yellow",
+     dep:"KAIUM - Klinika anesteziologie", con:"MUDr. Josef Skola, Ph.D.", email:"josef.skola@bulovka.cz", ph:"605 433 149",
+     desc:"Partnerstvi FNB + ESA v oblasti Space Medicine, lekar KAIUM bude podporovat misi ceskeho astronauta.", note:"", src:""},
+    {t:"Vesmirna medicina - predmet pro mediky", d:"prubezne", ds:"", m:0, c:"yellow",
+     dep:"KAIUM - Klinika anesteziologie", con:"MUDr. Josef Skola, Ph.D.", email:"josef.skola@bulovka.cz", ph:"605 433 149",
+     desc:"Vesmirna medicina jako predmet pro mediky ve FNB - spolu s 3. LF.", note:"", src:""}
+];
+
+// ===== NEZARAZENE (no time assigned) =====
+var U = [
+    {t:"Denzitometricky pristroj a osteologicka ambulance", d:"nezarazeno (2. pol. 2026)", ds:"", m:0, c:"yellow",
+     dep:"Interni klinika FNB a 3. LF UK", con:"MUDr. Oliver Kuchar, Ph.D.", email:"oliver.kuchar@bulovka.cz", ph:"266 084 614",
+     desc:"Porizeni denzitometrickeho pristroje a nasledne zalozeni osteologicke ambulance.", note:"", src:""},
+    {t:"JobDay", d:"termin bude dohodnut", ds:"", m:0, c:"yellow",
+     dep:"Personalni usek", con:"Mgr. Lenka Svancarova", email:"lenka.svancarova@bulovka.cz", ph:"266 084 114",
+     desc:"JobDay - dle pozadavku oddeleni, termin zatim neni domluven.", note:"Navrhujeme zaradit na podzim 2026.", src:""},
+    {t:"Spusteni Facebook stranek Personalniho useku", d:"nezarazeno (2. pol. 2026)", ds:"", m:0, c:"yellow",
+     dep:"Personalni usek", con:"Mgr. Lenka Svancarova", email:"lenka.svancarova@bulovka.cz", ph:"266 084 114",
+     desc:"Spusteni stranek Personalniho useku na Facebooku.", note:"", src:""},
+    {t:"Uprava letaku a Manualu noveho zamestnance", d:"co nejdrive", ds:"", m:0, c:"yellow",
+     dep:"Personalni usek", con:"Mgr. Lenka Svancarova", email:"lenka.svancarova@bulovka.cz", ph:"266 084 114",
+     desc:"Uprava letaku - dle potreby ci zmen ve smernicich + uprava Manualu noveho zamestnance.", note:"", src:""},
+    {t:"Mise nadace GICAM - Indie / Laos", d:"termin bude stanoven", ds:"", m:0, c:"yellow",
+     dep:"Klinika plasticke chirurgie", con:"MUDr. Martin Molitor", email:"martin.molitor@bulovka.cz", ph:"266 083 204",
+     desc:"Mozna mise v ramci Svycarske nadace GICAM do Indie a Laosu. Terminy zatim nejsou stanoveny.", note:"", src:""},
+    {t:"ANTROP-I - zarazeni pacientu", d:"2. pol. 2026", ds:"", m:0, c:"yellow",
+     dep:"Klinika infekcnich nemoci FNB", con:"Hynek Bartos", email:"hynek.bartos@bulovka.cz", ph:"721 360 937",
+     desc:"ANTROP-I - uspesne zarazeni 15-20 pacientu.", note:"", src:""},
+    {t:"Graficke zpracovani vzdelavaciho programu AIM", d:"nezarazeno", ds:"", m:0, c:"yellow",
+     dep:"KAIUM - Klinika anesteziologie", con:"MUDr. Josef Skola, Ph.D.", email:"josef.skola@bulovka.cz", ph:"605 433 149",
+     desc:"Graficke zpracovani vzdelavaciho programu oboru anesteziologie a intenzivni medicina pro potreby ziskani evropske akreditace.", note:"", src:""},
+    {t:"Natoceni videa - Omezujici prostredky", d:"2026 (Mezinarodni rok dobrovolnictvi)", ds:"", m:0, c:"blue",
+     dep:"Usek NOP", con:"Mgr. Sona Mendlova, Mgr. Vera Cermakova", email:"sona.mendlova@bulovka.cz", ph:"266 082 964",
+     desc:"Natoceni videa - Omezujici prostredky, akce k Mezinarodnimu roku dobrovolnictvi (IVY 2026 - vyhlaseno OSN).", note:"",
+     src:"https://www.un.org/en/observances/volunteer-day"}
+];
+
+// ======== HELPERS ========
+var monthNames = ["Leden","Unor","Brezen","Duben","Kveten","Cerven","Cervenec","Srpen","Zari","Rijen","Listopad","Prosinec"];
+var currentMonth = 4;
+
+function getMonthActs(m) {
+    var r = [];
+    for (var i = 0; i < A.length; i++) { if (A[i].m === m) r.push(A[i]); }
+    return r;
+}
+
+function renderStats() {
+    var all = A.length + R.length + U.length;
+    var depts = {};
+    var lists = [A, R, U];
+    var confirmed = 0;
+    var searched = 0;
+    for (var l = 0; l < lists.length; l++) {
+        for (var i = 0; i < lists[l].length; i++) {
+            depts[lists[l][i].dep] = true;
+            if (lists[l][i].c === "green") confirmed++;
+            if (lists[l][i].c === "blue") searched++;
+        }
+    }
+    var h = '';
+    h += '<div class="stat-box"><div class="stat-number">' + all + '</div><div class="stat-label">Aktivit celkem</div></div>';
+    h += '<div class="stat-box"><div class="stat-number">' + Object.keys(depts).length + '</div><div class="stat-label">Pracovist</div></div>';
+    h += '<div class="stat-box"><div class="stat-number">' + (confirmed + searched) + '</div><div class="stat-label">S potvrzenym/dohledanym datem</div></div>';
+    h += '<div class="stat-box"><div class="stat-number">' + (all - confirmed - searched) + '</div><div class="stat-label">S navrzenym datem</div></div>';
+    document.getElementById('statsBar').innerHTML = h;
+}
+
+function renderCalendar() {
+    var g = document.getElementById('calendarGrid');
+    var h = '';
+    for (var m = 1; m <= 12; m++) {
+        var acts = getMonthActs(m);
+        var cls = 'month-card';
+        if (m === currentMonth) cls += ' is-current';
+        if (m < currentMonth) cls += ' is-past';
+        h += '<div class="' + cls + '"><div class="month-name">' + monthNames[m-1] + '</div>';
+        if (acts.length > 0) {
+            var w = acts.length === 1 ? 'aktivita' : (acts.length < 5 ? 'aktivity' : 'aktivit');
+            h += '<div class="month-count has">' + acts.length + ' ' + w + '</div><ul class="month-activities">';
+            for (var j = 0; j < acts.length; j++) {
+                var a = acts[j];
+                var st = a.t.length > 38 ? a.t.substring(0
+                ,36) + '...' : a.t;
+                h += '<li><span class="act-dot ' + a.c + '"></span>' + st + '</li>';
+            }
+            h += '</ul>';
+        } else {
+            h += '<div class="month-count empty">0 aktivit</div>';
+        }
+        h += '</div>';
+    }
+    g.innerHTML = h;
+}
+
+function cardHTML(a, idx, prefix) {
+    var id = prefix + '-' + idx;
+    var h = '<div class="activity-card type-' + a.c + '" data-type="' + a.c + '" id="' + id + '" onclick="toggle(\'' + id + '\')">';
+    h += '<div class="activity-header"><div class="activity-header-left">';
+    h += '<div class="activity-date-badge">' + a.d + '</div>';
+    h += '<div class="activity-title-wrap"><div class="activity-title">' + a.t + '</div><div class="activity-dept">' + a.dep + '</div></div>';
+    h += '</div><svg class="activity-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>';
+    h += '<div class="activity-body"><div class="activity-body-inner">';
+    h += '<div class="detail-header"><div class="detail-header-title">' + a.t + '</div><div class="detail-header-date">' + a.d + '</div></div>';
+    h += '<div class="detail-grid">';
+    h += '<div class="detail-item"><span class="detail-label">Kontaktni osoba</span><span class="detail-value">' + a.con + '</span></div>';
+    h += '<div class="detail-item"><span class="detail-label">E-mail</span><span class="detail-value"><a href="mailto:' + a.email + '">' + a.email + '</a></span></div>';
+    h += '<div class="detail-item"><span class="detail-label">Telefon</span><span class="detail-value">' + a.ph + '</span></div>';
+    h += '<div class="detail-item"><span class="detail-label">Pracoviste</span><span class="detail-value">' + a.dep + '</span></div>';
+    h += '<div class="detail-item detail-full"><span class="detail-label">Popis</span><span class="detail-value">' + a.desc + '</span></div>';
+    h += '</div>';
+    if (a.note) { h += '<div class="activity-note">' + a.note + '</div>'; }
+    if (a.src) { h += '<div class="source-link">Termin dohledan na internetu: <a href="' + a.src + '" target="_blank">' + a.src + '</a></div>'; }
+    h += '</div></div></div>';
+    return h;
+}
+
+function toggle(id) {
+    var el = document.getElementById(id);
+    if (el.classList.contains('open')) el.classList.remove('open');
+    else el.classList.add('open');
+}
+
+function renderMonthly() {
+    var sorted = A.slice().sort(function(a,b){ return a.ds < b.ds ? -1 : (a.ds > b.ds ? 1 : 0); });
+    var sec = document.getElementById('monthlySection');
+    var h = '<div class="activity-list">';
+    for (var i = 0; i < sorted.length; i++) { h += cardHTML(sorted[i], i, 'a'); }
+    h += '</div>';
+    sec.innerHTML = h;
+}
+
+function renderRecurring() {
+    var sec = document.getElementById('recurringSection');
+    var h = '<div class="section-divider"><h3>Prubezne aktivity <span class="badge">' + R.length + '</span></h3></div>';
+    h += '<div class="activity-list">';
+    for (var i = 0; i < R.length; i++) { h += cardHTML(R[i], i, 'r'); }
+    h += '</div>';
+    sec.innerHTML = h;
+}
+
+function renderUnassigned() {
+    var sec = document.getElementById('unassignedSection');
+    var h = '<div class="section-divider"><h3>Nezarazene aktivity <span class="badge">' + U.length + '</span></h3></div>';
+    h += '<div class="activity-list">';
+    for (var i = 0; i < U.length; i++) { h += cardHTML(U[i], i, 'u'); }
+    h += '</div>';
+    sec.innerHTML = h;
+}
+
+// Filter
+document.getElementById('filterBar').addEventListener('click', function(e) {
+    if (!e.target.classList.contains('filter-btn')) return;
+    var btns = document.querySelectorAll('.filter-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+    e.target.classList.add('active');
+    var f = e.target.getAttribute('data-filter');
+    var cards = document.querySelectorAll('.activity-card');
+    for (var j = 0; j < cards.length; j++) {
+        cards[j].style.display = (f === 'all' || cards[j].getAttribute('data-type') === f) ? '' : 'none';
+    }
+});
+
+// INIT
+renderStats();
+renderCalendar();
+renderMonthly();
+renderRecurring();
+renderUnassigned();
+</script>
+</body>
+</html>
