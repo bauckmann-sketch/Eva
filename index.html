@@ -69,12 +69,14 @@
         .month-count.has { background:var(--accent-light); color:var(--accent); }
         .month-count.empty { background:var(--bg); color:var(--text-dim); }
         .month-activities { list-style:none; }
-        .month-activities li { font-size:10.5px; padding:3px 0; border-bottom:1px solid var(--border-light); color:var(--text-sec); line-height:1.35; display:flex; align-items:flex-start; gap:5px; }
+        .month-activities li { font-size:10.5px; padding:3px 0; border-bottom:1px solid var(--border-light); color:var(--text-sec); line-height:1.35; display:flex; align-items:flex-start; gap:5px; cursor:pointer; border-radius:4px; transition:all .15s; }
+        .month-activities li:hover { color:var(--accent); background:var(--accent-light); padding-left:4px; }
         .month-activities li:last-child { border-bottom:none; }
         .act-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; margin-top:4px; }
         .act-dot.green { background:var(--green); }
         .act-dot.yellow { background:var(--yellow); }
         .act-dot.blue { background:var(--accent); }
+        .activity-card.highlight { box-shadow:0 0 0 3px rgba(59,108,245,.25), var(--shadow-md); }
 
         .section-header { margin-bottom:16px; }
         .section-header h2 { font-size:1.3rem; font-weight:700; letter-spacing:-.02em; }
@@ -436,6 +438,7 @@ var U = [
 // ======== HELPERS ========
 var monthNames = ["Leden","Unor","Brezen","Duben","Kveten","Cerven","Cervenec","Srpen","Zari","Rijen","Listopad","Prosinec"];
 var currentMonth = 4;
+var titleToCardId = {};
 
 function getMonthActs(m) {
     var r = [];
@@ -478,9 +481,8 @@ function renderCalendar() {
             h += '<div class="month-count has">' + acts.length + ' ' + w + '</div><ul class="month-activities">';
             for (var j = 0; j < acts.length; j++) {
                 var a = acts[j];
-                var st = a.t.length > 38 ? a.t.substring(0
-                ,36) + '...' : a.t;
-                h += '<li><span class="act-dot ' + a.c + '"></span>' + st + '</li>';
+                var st = a.t.length > 38 ? a.t.substring(0,36) + '...' : a.t;
+                h += '<li onclick="scrollToActivity(\'' + a.t.replace(/'/g, '') + '\')"><span class="act-dot ' + a.c + '"></span>' + st + '</li>';
             }
             h += '</ul>';
         } else {
@@ -519,11 +521,36 @@ function toggle(id) {
     else el.classList.add('open');
 }
 
+function scrollToActivity(title) {
+    var cardId = titleToCardId[title];
+    if (!cardId) return;
+    var el = document.getElementById(cardId);
+    if (!el) return;
+    // Reset filter to show all
+    var btns = document.querySelectorAll('.filter-btn');
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].classList.remove('active');
+        if (btns[i].getAttribute('data-filter') === 'all') btns[i].classList.add('active');
+    }
+    var cards = document.querySelectorAll('.activity-card');
+    for (var j = 0; j < cards.length; j++) cards[j].style.display = '';
+    // Scroll and open
+    el.scrollIntoView({ behavior:'smooth', block:'center' });
+    if (!el.classList.contains('open')) el.classList.add('open');
+    // Highlight briefly
+    el.classList.add('highlight');
+    setTimeout(function(){ el.classList.remove('highlight'); }, 2000);
+}
+
 function renderMonthly() {
     var sorted = A.slice().sort(function(a,b){ return a.ds < b.ds ? -1 : (a.ds > b.ds ? 1 : 0); });
     var sec = document.getElementById('monthlySection');
     var h = '<div class="activity-list">';
-    for (var i = 0; i < sorted.length; i++) { h += cardHTML(sorted[i], i, 'a'); }
+    for (var i = 0; i < sorted.length; i++) {
+        var cardId = 'a-' + i;
+        titleToCardId[sorted[i].t.replace(/'/g, '')] = cardId;
+        h += cardHTML(sorted[i], i, 'a');
+    }
     h += '</div>';
     sec.innerHTML = h;
 }
