@@ -510,6 +510,16 @@ function renderCalendar() {
     g.innerHTML = h;
 }
 
+// ─── Server-backed notes ───
+var _notes = {};
+
+function loadNotesFromServer(callback) {
+    fetch('/api/notes').then(function(r){ return r.json(); }).then(function(data){
+        _notes = data || {};
+        if (callback) callback();
+    }).catch(function(){ _notes = {}; if (callback) callback(); });
+}
+
 function getNoteKey(prefix, idx) {
     return 'fnb_note_' + prefix + '_' + idx;
 }
@@ -519,11 +529,13 @@ function saveUserNote(prefix, idx, event) {
     var key = getNoteKey(prefix, idx);
     var textarea = document.getElementById('note-input-' + prefix + '-' + idx);
     var val = textarea.value.trim();
-    if (val) {
-        localStorage.setItem(key, val);
-    } else {
-        localStorage.removeItem(key);
-    }
+    // Save to server
+    if (val) { _notes[key] = val; } else { delete _notes[key]; }
+    fetch('/api/notes', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({key: key, value: val})
+    });
     // Show saved confirmation
     var savedEl = document.getElementById('note-saved-' + prefix + '-' + idx);
     savedEl.classList.add('show');
@@ -546,7 +558,7 @@ function saveUserNote(prefix, idx, event) {
 function cardHTML(a, idx, prefix) {
     var id = prefix + '-' + idx;
     var noteKey = getNoteKey(prefix, idx);
-    var savedNote = localStorage.getItem(noteKey) || '';
+    var savedNote = _notes[noteKey] || '';
     var hasNote = savedNote.length > 0;
     var h = '<div class="activity-card type-' + a.c + '" data-type="' + a.c + '" id="' + id + '" onclick="toggle(\'' + id + '\')">'; 
     h += '<div class="activity-header"><div class="activity-header-left">';
@@ -665,11 +677,13 @@ function doLogin() {
 function showApp() {
     document.getElementById('loginOverlay').classList.add('hidden');
     document.getElementById('appContent').classList.add('visible');
-    renderStats();
-    renderCalendar();
-    renderMonthly();
-    renderRecurring();
-    renderUnassigned();
+    loadNotesFromServer(function(){
+        renderStats();
+        renderCalendar();
+        renderMonthly();
+        renderRecurring();
+        renderUnassigned();
+    });
 }
 
 // Enter key support
