@@ -149,6 +149,32 @@
         .user-note-has-note { position:relative; }
         .user-note-indicator { width:7px; height:7px; background:var(--accent); border-radius:50%; position:absolute; top:4px; right:4px; box-shadow:0 0 0 2px var(--white); }
 
+        /* ─── GOOGLE DRIVE PANEL ─── */
+        .drive-section { margin-top:12px; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; background:var(--white); }
+        .drive-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:linear-gradient(135deg, #f8fafe 0%, #eef3ff 100%); border-bottom:1px solid var(--border-light); cursor:pointer; }
+        .drive-header-left { display:flex; align-items:center; gap:8px; }
+        .drive-header-left svg { width:20px; height:20px; flex-shrink:0; }
+        .drive-header-title { font-size:12px; font-weight:700; color:var(--text); }
+        .drive-header-sub { font-size:10px; color:var(--text-dim); }
+        .drive-open-btn { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; background:var(--white); border:1px solid var(--border); border-radius:6px; font-size:11px; font-weight:600; color:var(--accent); text-decoration:none; transition:all .2s; cursor:pointer; font-family:'Inter',sans-serif; }
+        .drive-open-btn:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+        .drive-open-btn svg { width:12px; height:12px; }
+        .drive-embed { width:100%; height:340px; border:none; background:#fafbff; }
+        .drive-input-section { margin-top:12px; padding:12px; background:#fafbff; border:1px solid var(--border-light); border-radius:var(--radius-sm); }
+        .drive-input-row { display:flex; gap:8px; align-items:center; }
+        .drive-input-label { font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--text-dim); font-weight:700; display:flex; align-items:center; gap:5px; margin-bottom:6px; }
+        .drive-input-label svg { width:14px; height:14px; color:#4285f4; }
+        .drive-url-input { flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:12px; font-family:'Inter',sans-serif; color:var(--text); outline:none; transition:border-color .2s; }
+        .drive-url-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(59,108,245,.1); }
+        .drive-url-input::placeholder { color:var(--text-dim); }
+        .drive-save-btn { padding:8px 16px; border:none; border-radius:6px; background:#4285f4; color:#fff; font-size:12px; font-weight:600; font-family:'Inter',sans-serif; cursor:pointer; transition:all .2s; white-space:nowrap; }
+        .drive-save-btn:hover { background:#3367d6; }
+        .drive-remove-btn { padding:8px 12px; border:1px solid #e53e3e; border-radius:6px; background:transparent; color:#e53e3e; font-size:12px; font-weight:600; font-family:'Inter',sans-serif; cursor:pointer; transition:all .2s; white-space:nowrap; }
+        .drive-remove-btn:hover { background:#e53e3e; color:#fff; }
+        .drive-saved-msg { font-size:11px; color:var(--green); font-weight:600; opacity:0; transition:opacity .3s; }
+        .drive-saved-msg.show { opacity:1; }
+        .drive-indicator { width:7px; height:7px; background:#4285f4; border-radius:50%; position:absolute; top:-2px; right:-2px; box-shadow:0 0 0 2px var(--white); }
+
         .section-divider { margin:36px 0 20px; padding:10px 0; border-bottom:2px solid var(--border); }
         .section-divider h3 { font-size:1.1rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px; }
         .section-divider .badge { font-size:11px; background:var(--accent-light); color:var(--accent); padding:2px 10px; border-radius:20px; font-weight:700; }
@@ -265,7 +291,8 @@ var A = [
     {t:"Den hygieny rukou (WHO)", d:"5. 5. 2026", ds:"2026-05-05", m:5, c:"blue",
      dep:"OHE - Oddeleni hyg. epidemiologie", con:"Hana Blahova", email:"hana.blahova@bulovka.cz", ph:"l. 6070",
      desc:"Svetovy den hygieny rukou (WHO) - kazdorocne 5. kvetna. Potreba fotodokumentace.", note:"",
-     src:"https://www.who.int/campaigns/world-hand-hygiene-day"},
+     src:"https://www.who.int/campaigns/world-hand-hygiene-day",
+     drive:"https://drive.google.com/drive/folders/1ltzhFU7tNhdENd4P01VU4n4O0S6cHuPU"},
 
     {t:"Tym FNB (KAIUM) na Vltava Run", d:"9.-10. 5. 2026", ds:"2026-05-09", m:5, c:"blue",
      dep:"KAIUM - Klinika anesteziologie", con:"MUDr. Josef Skola, Ph.D.", email:"josef.skola@bulovka.cz", ph:"605 433 149",
@@ -512,12 +539,17 @@ function renderCalendar() {
 
 // ─── Server-backed notes ───
 var _notes = {};
+var _drives = {};
 
 function loadNotesFromServer(callback) {
+    var loaded = 0;
+    function check() { loaded++; if (loaded >= 2 && callback) callback(); }
     fetch('/api/notes').then(function(r){ return r.json(); }).then(function(data){
-        _notes = data || {};
-        if (callback) callback();
-    }).catch(function(){ _notes = {}; if (callback) callback(); });
+        _notes = data || {}; check();
+    }).catch(function(){ _notes = {}; check(); });
+    fetch('/api/drives').then(function(r){ return r.json(); }).then(function(data){
+        _drives = data || {}; check();
+    }).catch(function(){ _drives = {}; check(); });
 }
 
 function getNoteKey(prefix, idx) {
@@ -555,14 +587,89 @@ function saveUserNote(prefix, idx, event) {
     }
 }
 
+function getDriveKey(prefix, idx) { return 'fnb_drive_' + prefix + '_' + idx; }
+
+function getDriveUrl(a, prefix, idx) {
+    var key = getDriveKey(prefix, idx);
+    return _drives[key] || a.drive || '';
+}
+
+function extractFolderId(url) {
+    var m = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+    return m ? m[1] : '';
+}
+
+function saveDriveUrl(prefix, idx, event) {
+    event.stopPropagation();
+    var key = getDriveKey(prefix, idx);
+    var input = document.getElementById('drive-input-' + prefix + '-' + idx);
+    var val = input.value.trim();
+    if (val && !extractFolderId(val)) { alert('Neplatny odkaz na Google Drive slozku.'); return; }
+    if (val) { _drives[key] = val; } else { delete _drives[key]; }
+    fetch('/api/drives', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({key:key, value:val}) });
+    var msg = document.getElementById('drive-saved-' + prefix + '-' + idx);
+    msg.classList.add('show');
+    setTimeout(function(){ msg.classList.remove('show'); }, 2000);
+    // Re-render the drive preview
+    var container = document.getElementById('drive-panel-' + prefix + '-' + idx);
+    container.innerHTML = renderDrivePanel(val, prefix, idx);
+}
+
+function removeDriveUrl(prefix, idx, event) {
+    event.stopPropagation();
+    var key = getDriveKey(prefix, idx);
+    delete _drives[key];
+    fetch('/api/drives', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({key:key, value:''}) });
+    var container = document.getElementById('drive-panel-' + prefix + '-' + idx);
+    container.innerHTML = renderDrivePanel('', prefix, idx);
+}
+
+function renderDrivePanel(driveUrl, prefix, idx) {
+    var h = '';
+    if (driveUrl) {
+        var folderId = extractFolderId(driveUrl);
+        h += '<div class="drive-section">';
+        h += '<div class="drive-header" onclick="event.stopPropagation()">';
+        h += '<div class="drive-header-left">';
+        h += '<svg viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-20.4 35.3c-.8 1.4-1.2 2.95-1.2 4.5h27.5z" fill="#00ac47"/><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.5l5.85 11.5z" fill="#ea4335"/><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="m73.4 26.5-10.1-17.5c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 23.5h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>';
+        h += '<div><div class="drive-header-title">Google Drive slozka</div><div class="drive-header-sub">Kliknutim otevrete v novem okne</div></div>';
+        h += '</div>';
+        h += '<a href="' + driveUrl + '" target="_blank" class="drive-open-btn" onclick="event.stopPropagation()">Otevrit <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>';
+        h += '</div>';
+        h += '<iframe class="drive-embed" src="https://drive.google.com/embeddedfolderview?id=' + folderId + '#list" loading="lazy"></iframe>';
+        h += '</div>';
+        // Edit/remove controls
+        h += '<div class="drive-input-section" onclick="event.stopPropagation()">';
+        h += '<div class="drive-input-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Upravit odkaz na Drive</div>';
+        h += '<div class="drive-input-row">';
+        h += '<input class="drive-url-input" id="drive-input-' + prefix + '-' + idx + '" value="' + driveUrl + '" placeholder="https://drive.google.com/drive/folders/...">';
+        h += '<button class="drive-save-btn" onclick="saveDriveUrl(\'' + prefix + '\', ' + idx + ', event)">Ulozit</button>';
+        h += '<button class="drive-remove-btn" onclick="removeDriveUrl(\'' + prefix + '\', ' + idx + ', event)">Odebrat</button>';
+        h += '<span class="drive-saved-msg" id="drive-saved-' + prefix + '-' + idx + '">✓ Ulozeno</span>';
+        h += '</div></div>';
+    } else {
+        // No drive link yet - show input to add one
+        h += '<div class="drive-input-section" onclick="event.stopPropagation()">';
+        h += '<div class="drive-input-label"><svg viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg" style="width:14px;height:14px"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-20.4 35.3c-.8 1.4-1.2 2.95-1.2 4.5h27.5z" fill="#00ac47"/><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.5l5.85 11.5z" fill="#ea4335"/><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="m73.4 26.5-10.1-17.5c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 23.5h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>Pridat Google Drive slozku</div>';
+        h += '<div class="drive-input-row">';
+        h += '<input class="drive-url-input" id="drive-input-' + prefix + '-' + idx + '" placeholder="https://drive.google.com/drive/folders/...">';
+        h += '<button class="drive-save-btn" onclick="saveDriveUrl(\'' + prefix + '\', ' + idx + ', event)">Pridat</button>';
+        h += '<span class="drive-saved-msg" id="drive-saved-' + prefix + '-' + idx + '">✓ Ulozeno</span>';
+        h += '</div></div>';
+    }
+    return h;
+}
+
 function cardHTML(a, idx, prefix) {
     var id = prefix + '-' + idx;
     var noteKey = getNoteKey(prefix, idx);
     var savedNote = _notes[noteKey] || '';
     var hasNote = savedNote.length > 0;
+    var driveUrl = getDriveUrl(a, prefix, idx);
+    var hasDrive = driveUrl.length > 0;
     var h = '<div class="activity-card type-' + a.c + '" data-type="' + a.c + '" id="' + id + '" onclick="toggle(\'' + id + '\')">'; 
     h += '<div class="activity-header"><div class="activity-header-left">';
-    h += '<div class="activity-date-badge' + (hasNote ? ' user-note-has-note' : '') + '">' + a.d + (hasNote ? '<span class="user-note-indicator"></span>' : '') + '</div>';
+    h += '<div class="activity-date-badge' + (hasNote ? ' user-note-has-note' : '') + '" style="position:relative">' + a.d + (hasNote ? '<span class="user-note-indicator"></span>' : '') + (hasDrive ? '<span class="drive-indicator"></span>' : '') + '</div>';
     h += '<div class="activity-title-wrap"><div class="activity-title">' + a.t + '</div><div class="activity-dept">' + a.dep + '</div></div>';
     h += '</div><svg class="activity-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>';
     h += '<div class="activity-body"><div class="activity-body-inner">';
@@ -576,6 +683,8 @@ function cardHTML(a, idx, prefix) {
     h += '</div>';
     if (a.note) { h += '<div class="activity-note">' + a.note + '</div>'; }
     if (a.src) { h += '<div class="source-link">Termin dohledan na internetu: <a href="' + a.src + '" target="_blank">' + a.src + '</a></div>'; }
+    // Google Drive section
+    h += '<div id="drive-panel-' + prefix + '-' + idx + '">' + renderDrivePanel(driveUrl, prefix, idx) + '</div>';
     // User note section
     h += '<div class="user-note-section" onclick="event.stopPropagation()">';
     h += '<div class="user-note-header"><span class="user-note-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>Vase poznamka</span></div>';
@@ -695,7 +804,7 @@ document.getElementById('loginEmail').addEventListener('keydown', function(e) {
 });
 
 // Check session
-if (sessionStorage.getItem('fnb_auth') === '1') {
+if (sessionStorage.getItem('fnb_auth') === '1' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     showApp();
 }
 </script>
